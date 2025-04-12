@@ -8,10 +8,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import java.security.SignatureException;
+import java.util.List;
 
 
 @Tag(name = "Webhook", description = "Recebimento de eventos do HubSpot")
@@ -46,13 +50,13 @@ public interface WebhookApi {
             )
     })
     @PostMapping
-    ResponseEntity<String> handleWebhook(
+    ResponseEntity<String> getWebhook(
             @Parameter(
                     description = "Evento enviado pelo HubSpot",
                     required = true,
                     schema = @Schema(implementation = HubspotWebhookEvent.class)
-            )
-            @RequestBody HubspotWebhookEvent event
-    );
+            ) HttpServletRequest request,
+            @RequestBody List<HubspotWebhookEvent> event
+    ) throws SignatureException;
 
 }

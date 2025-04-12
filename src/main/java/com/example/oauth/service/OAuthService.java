@@ -1,6 +1,6 @@
 package com.example.oauth.service;
 
-import com.example.oauth.model.OAuthToken;
+import com.example.oauth.repository.OAuthToken;
 
 public interface OAuthService {
 

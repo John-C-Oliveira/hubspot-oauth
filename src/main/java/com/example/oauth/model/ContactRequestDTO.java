@@ -2,12 +2,12 @@ package com.example.oauth.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Getter
-@AllArgsConstructor
+@Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class ContactRequestDTO {
 
     @Schema(description = "Endereço de e-mail do cContact", example = "john@gmail.com")

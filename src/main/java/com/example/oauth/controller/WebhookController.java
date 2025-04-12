@@ -2,13 +2,15 @@ package com.example.oauth.controller;
 
 import com.example.oauth.model.HubspotWebhookEvent;
 import com.example.oauth.service.WebhookService;
-import com.example.oauth.service.impl.WebhookServiceImpl;
-import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.security.SignatureException;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -16,10 +18,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class WebhookController implements WebhookApi {
 
     private final WebhookService webhookService;
-    public ResponseEntity<String> handleWebhook(@Valid @RequestBody HubspotWebhookEvent event) {
-        log.info("Recebendo evento do HubSpot. Id do evento: [{}]", event.getObjectId());
-        webhookService.processEvents(event);
-        return ResponseEntity.ok("Webhook processado com sucesso.");
+
+
+    @Override
+    public ResponseEntity<String> getWebhook(HttpServletRequest request, @RequestBody List<HubspotWebhookEvent> events) throws SignatureException {
+
+        log.info("Recebendo eventos do HubSpot. Quantidade de registros: [{}]", events.size());
+        webhookService.processEvents(request, events);
+        return ResponseEntity.status(204).body("Eventos processados com sucesso");
     }
+
 
 }

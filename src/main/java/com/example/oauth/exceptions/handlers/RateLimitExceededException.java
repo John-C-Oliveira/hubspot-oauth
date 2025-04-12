@@ -6,7 +6,7 @@ import org.springframework.web.client.HttpClientErrorException;
 public class RateLimitExceededException extends HttpClientErrorException {
 
     public RateLimitExceededException(long retryAfterSeconds) {
-        super(HttpStatusCode.valueOf(429),"Rate limit excedido. Tente novamente em " + retryAfterSeconds + " segundos.");
+        super(HttpStatusCode.valueOf(429), "Rate limit excedido. Tente novamente em " + retryAfterSeconds + " segundos.");
     }
 
 

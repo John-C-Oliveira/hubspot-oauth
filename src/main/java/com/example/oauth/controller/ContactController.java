@@ -1,8 +1,6 @@
 package com.example.oauth.controller;
 
-import com.example.oauth.exceptions.handlers.HubspotIntegrationException;
 import com.example.oauth.model.ContactRequestDTO;
-import com.example.oauth.model.ContactResponseDTO;
 import com.example.oauth.service.ContactService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,12 +17,9 @@ public class ContactController implements ContactApi {
 
     @Override
     public ResponseEntity<String> createContact(ContactRequestDTO contactRequest) {
-        try {
-            log.info("Criando contato no HubSpot. para cliente de Email: [{}]", contactRequest.getEmail());
-            return contactService.createHubspotContact(contactRequest);
-        }catch (Exception e){
-            log.error("Erro ao criar contato no HubSpot. Motivo: [{}]", e.getMessage());
-            return ResponseEntity.status(500).body("Erro ao realizar criação de contato no HubSpot. Motivo: " + e.getMessage());
-        }
+        log.info("Criando contato no HubSpot para cliente com email: [{}]", contactRequest.getEmail());
+        return contactService.createHubspotContact(contactRequest);
     }
+
+
 }

@@ -2,8 +2,9 @@ package com.example.oauth.util;
 
 import com.example.oauth.config.HubSpotOAuthConfig;
 import com.example.oauth.exceptions.handlers.TokenNotFoundException;
-import com.example.oauth.model.OAuthToken;
-import com.example.oauth.model.TokenResponse;
+import com.example.oauth.exceptions.handlers.TokenRefreshException;
+import com.example.oauth.model.TokenResponseDTO;
+import com.example.oauth.repository.OAuthToken;
 import com.example.oauth.repository.TokenRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -35,13 +36,20 @@ public class TokenManager {
     }
 
     public synchronized OAuthToken getValidToken() {
-        if (oAuthToken == null || isExpired(oAuthToken)) {
-            log.info("Token em cache ausente ou expirado. Tentando buscar novo token...");
-            oAuthToken = fetchLatestToken()
-                    .map(token -> refreshIfExpired(token))
-                    .orElseThrow(() -> new TokenNotFoundException("Nenhum token válido encontrado"));
+        if (oAuthToken != null && !isExpired(oAuthToken)) {
+            return oAuthToken;
         }
-        return oAuthToken;
+
+        log.info("Token em cache ausente ou expirado. Buscando no banco de dados...");
+        Optional<OAuthToken> latest = fetchLatestToken();
+
+        if (latest.isEmpty()) {
+            throw new TokenNotFoundException("Nenhum token encontrado no banco de dados.");
+        }
+
+        OAuthToken token = refreshIfExpired(latest.get());
+        oAuthToken = token;
+        return token;
     }
 
     private Optional<OAuthToken> fetchLatestToken() {
@@ -49,11 +57,12 @@ public class TokenManager {
     }
 
     private OAuthToken refreshIfExpired(OAuthToken token) {
-        if (isExpired(token)) {
-            log.info("Token expirado, iniciando tentativa de atualização");
-            return refreshToken(token);
+        if (!isExpired(token)) {
+            return token;
         }
-        return token;
+
+        log.info("Token expirado. Iniciando processo de renovação via refresh_token...");
+        return refreshToken(token);
     }
 
     private boolean isExpired(OAuthToken token) {
@@ -61,28 +70,30 @@ public class TokenManager {
     }
 
     private OAuthToken refreshToken(OAuthToken token) {
-        try {
-            String body = "grant_type=refresh_token"
-                    + CLIENT_ID + config.getClientId()
-                    + CLIENT_SECRET + config.getClientSecret()
-                    + REFRESH_TOKEN + token.getRefreshToken();
+        String body = "grant_type=refresh_token"
+                + CLIENT_ID + config.getClientId()
+                + CLIENT_SECRET + config.getClientSecret()
+                + REFRESH_TOKEN + token.getRefreshToken();
 
+        try {
             HttpResponse<String> response = HttpUtil.postForm(config.getTokenUrl(), body);
 
             if (HttpStatusCode.valueOf(response.statusCode()).is2xxSuccessful()) {
-                TokenResponse refreshed = objectMapper.readValue(response.body(), TokenResponse.class);
+                TokenResponseDTO refreshed = objectMapper.readValue(response.body(), TokenResponseDTO.class);
                 token.setAccessToken(refreshed.getAccessToken());
                 token.setExpiresIn(refreshed.getExpiresIn());
                 token.setCreatedAt(LocalDateTime.now());
                 tokenRepository.save(token);
-                log.info("Token atualizado com sucesso no HubSpot.");
+
+                log.info("Token renovado com sucesso.");
                 return token;
             } else {
-                throw new TokenNotFoundException("Não foi possível renovar o token na HubSpot. HttpStatus: "+response.statusCode()+" Body: " + response.body());
+                log.error("Erro ao renovar token. Status: [{}], Body: [{}]", response.statusCode(), response.body());
+                throw new TokenRefreshException("Não foi possível renovar o token na HubSpot.");
             }
-
         } catch (Exception e) {
-            throw new TokenNotFoundException("Erro ao atualizar token no HubSpot. Motivo: " + e.getMessage());
+            log.error("Erro ao tentar atualizar token: {}", e.getMessage(), e);
+            throw new TokenRefreshException("Erro técnico ao atualizar token.");
         }
     }
 }

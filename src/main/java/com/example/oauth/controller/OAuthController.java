@@ -1,11 +1,10 @@
 package com.example.oauth.controller;
 
 import com.example.oauth.service.OAuthService;
-import com.example.oauth.service.impl.OAuthServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
@@ -20,6 +19,17 @@ public class OAuthController implements OAuthApi {
 
     @Override
     public ResponseEntity<String> oauthCallback(String code, String error) {
+        ResponseEntity<String> validatedOAuthResponse = validateOAuthResponse(code, error);
+        if (validatedOAuthResponse != null) {
+            return validatedOAuthResponse;
+        }
+
+        String msg = oAuthService.exchangeCodeForToken(code);
+        return ResponseEntity.ok(msg);
+    }
+
+
+    private static ResponseEntity<String> validateOAuthResponse(String code, String error) {
         if (error != null) {
             log.error("Foi recebido um erro do HubSpot. Erro: [{}]", error);
             return ResponseEntity.badRequest().body("Erro recebido do HubSpot: " + error);
@@ -29,14 +39,7 @@ public class OAuthController implements OAuthApi {
             log.warn("Código de autorização ausente na URL de retorno");
             return ResponseEntity.badRequest().body("Código de autorização não informado.");
         }
-
-        try {
-            String msg = oAuthService.exchangeCodeForToken(code);
-            return ResponseEntity.ok(msg);
-        } catch (Exception e) {
-            log.error("Erro ao realizar conversão do código por token. Motivo: [{}]", e.getMessage());
-            return ResponseEntity.status(500).body("Erro ao realizar conversão do código por token: " + e.getMessage());
-        }
+        return null;
     }
 
 
