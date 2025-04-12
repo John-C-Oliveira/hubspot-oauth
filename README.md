@@ -35,8 +35,8 @@ Nele nós temos:
 ### Para rodar esse projeto você precisará:
 - Java 17+
 - Maven
-- Ngrok
-- Docker
+- Ngrok (apenas se quiser testar o webhook)
+- Docker 
 
 
 
@@ -69,15 +69,17 @@ docker build -t hubspot-oauth .
 
 - Criar `docker-compose.yml` com suporte a banco externo (ex: PostgreSQL)
 - Endpoint de gerenciamento de tokens (listar, validar, revogar, verificar scopes)
-- Integração com frontend para autorização ( Apenas para um experiencia mais amigavel)
-- Atualizar a URL de Webhook via API da HubSpot ( Hoje necessita atualizar no HubSpot toda vez que iniciar o Ngrok)
-
+- Integração com frontend para autorização (O fluxo de segurança foi feito apenas entre back-end e HubSpot. sem verificações com front ou BFF)
+- Atualizar a URL de Webhook via API da HubSpot ( Hoje necessita atualizar no HubSpot toda vez que iniciar o Ngrok, apenas para esse projeto, visto que em produção o host é fixo)
+- Adicionar uma verificação de cliente ao utilizar o token, visto que podemos ter mais de 1 cliente, então teriamos mais de 1 token. ( encaixa na parte de Integração com frontend abordada mais acima)
 ## Escolhas
 
-| Biblioteca / Recurso | Finalidade | Motivo da escolha |
-|----------------------|------------|--------------------|
-| **Spring Boot**      | Framework principal para REST API | Produtivo, simples |
-| **Java HttpClient**  | Comunicação com a API da HubSpot | Leve, sem necessidade de bibliotecas externas |
-| **Jackson**          | Serialização / deserialização JSON | Já esta no embutido com Spring Boot |
-| **Lombok**           | Redução de código repetitivo | Facilita construção de DTOs e logs |
+| Biblioteca / Recurso | Finalidade                         | Motivo da escolha                              |
+|----------------------|------------------------------------|------------------------------------------------|
+| **Spring Boot**      | Framework principal para REST API  | Produtivo, simples                             |
+| **Java HttpClient**  | Comunicação com a API da HubSpot   | Leve, sem necessidade de bibliotecas externas  |
+| **Jackson**          | Serialização / deserialização JSON | Já esta no embutido com Spring Boot            |
+| **Lombok**           | Redução de código repetitivo       | Facilita construção de DTOs e logs             |
+| **NGrok**            | Testes locais para hosts remotos   | Necessidade de integração no teste com HubSpot |
+
 
